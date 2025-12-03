@@ -71,10 +71,25 @@ function makePageForEpisodes(episodeList) {
   heading.textContent = "TV Show Episodes";
   main.appendChild(heading);
 
+  // Episode count
   const count = document.createElement("p");
   count.className = "episode-count";
   count.textContent = `Showing ${episodeList.length} episode(s)`;
   main.appendChild(count);
+
+  // --- ADD SEARCH BOX ---
+  const searchLabel = document.createElement("label");
+  searchLabel.textContent = "Search episodes: ";
+  searchLabel.setAttribute("for", "search-input");
+
+  const searchInput = document.createElement("input");
+  searchInput.id = "search-input";
+  searchInput.type = "text";
+  searchInput.placeholder = "Type to search by name or summary...";
+
+  searchLabel.appendChild(searchInput);
+  main.appendChild(searchLabel);
+  // ----------------------
 
   // Container for episodes
   const list = document.createElement("section");
@@ -89,6 +104,8 @@ function makePageForEpisodes(episodeList) {
 
   main.appendChild(list);
   rootElem.appendChild(main);
+  
 }
+
 
 window.onload = setup;
