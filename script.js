@@ -64,7 +64,7 @@ function makePageForEpisodes(episodeList) {
   const main = document.createElement("main");
   main.className = "site-main";
 
-  // Header block that contains both the title and search box
+  // Header block for title, search, and dropdown
   const headerContainer = document.createElement("div");
   headerContainer.className = "site-header";
 
@@ -87,14 +87,43 @@ function makePageForEpisodes(episodeList) {
 
   searchLabel.appendChild(searchInput);
   searchContainer.appendChild(searchLabel);
-
   headerContainer.appendChild(searchContainer);
+
+  // --- Episode select dropdown ---
+  const selectContainer = document.createElement("div");
+  selectContainer.className = "select-container";
+
+  const selectLabel = document.createElement("label");
+  selectLabel.textContent = "Jump to episode: ";
+  selectLabel.setAttribute("for", "episode-select");
+
+  const episodeSelect = document.createElement("select");
+  episodeSelect.id = "episode-select";
+
+  // Default option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "All episodes";
+  episodeSelect.appendChild(defaultOption);
+
+  // Populate select with episodes
+  episodeList.forEach((ep, index) => {
+    const option = document.createElement("option");
+    option.value = index; // index will help us find the episode
+    option.textContent = `${formatEpisodeCode(ep.season, ep.number)} - ${ep.name}`;
+    episodeSelect.appendChild(option);
+  });
+
+  selectLabel.appendChild(episodeSelect);
+  selectContainer.appendChild(selectLabel);
+  headerContainer.appendChild(selectContainer);
+
   main.appendChild(headerContainer);
 
   // Displays the number of episodes shown vs total
   const count = document.createElement("p");
   count.className = "episode-count";
-  count.textContent = `Showing ${episodeList.length} of ${episodeList.length} episodes`; // initial count
+  count.textContent = `Showing ${episodeList.length} of ${episodeList.length} episodes`;
   main.appendChild(count);
 
   // Container for all episode cards
@@ -133,7 +162,26 @@ function makePageForEpisodes(episodeList) {
     // Update count to show "X of Y episodes"
     count.textContent = `Showing ${matched} of ${episodeList.length} episodes`;
   });
+
+  // --- Jump to episode using select ---
+  episodeSelect.addEventListener("change", () => {
+    const selectedIndex = episodeSelect.value;
+    Array.from(list.children).forEach((card, i) => {
+      // Show only selected episode or all if default
+      if (selectedIndex === "" || i == selectedIndex) {
+        card.style.display = "";
+      } else {
+        card.style.display = "none";
+      }
+    });
+
+    // Update count dynamically
+    const visibleCount =
+      selectedIndex === "" ? episodeList.length : 1;
+    count.textContent = `Showing ${visibleCount} of ${episodeList.length} episodes`;
+  });
 }
+
 
 // Runs setup when window loads
 window.onload = setup;
