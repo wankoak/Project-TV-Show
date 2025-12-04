@@ -91,10 +91,10 @@ function makePageForEpisodes(episodeList) {
   headerContainer.appendChild(searchContainer);
   main.appendChild(headerContainer);
 
-  // Displays the number of episodes shown
+  // Displays the number of episodes shown vs total
   const count = document.createElement("p");
   count.className = "episode-count";
-  count.textContent = `Showing ${episodeList.length} episode(s)`; // initial count
+  count.textContent = `Showing ${episodeList.length} of ${episodeList.length} episodes`; // initial count
   main.appendChild(count);
 
   // Container for all episode cards
@@ -130,7 +130,8 @@ function makePageForEpisodes(episodeList) {
       }
     });
 
-    count.textContent = `Showing ${matched} episode(s)`; // update the count live
+    // Update count to show "X of Y episodes"
+    count.textContent = `Showing ${matched} of ${episodeList.length} episodes`;
   });
 }
 
