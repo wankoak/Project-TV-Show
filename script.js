@@ -1,87 +1,137 @@
+// Initial setup runs after the page loads
 function setup() {
-  const allEpisodes = getAllEpisodes(); // provided by episodes.js
-  makePageForEpisodes(allEpisodes);
+  const allEpisodes = getAllEpisodes(); // supplied by episodes.js, provides the full episode list
+  makePageForEpisodes(allEpisodes); // builds the layout and fills it with episode cards
 }
 
+// Formats season and episode into S07E02 format
 function formatEpisodeCode(season, number) {
-  // Format like S01E01
-  const s = String(season).padStart(2, "0");
-  const e = String(number).padStart(2, "0");
+  const s = String(season).padStart(2, "0"); // ensures season has two digits
+  const e = String(number).padStart(2, "0"); // ensures episode number has two digits
   return `S${s}E${e}`;
 }
 
+// Builds a single episode card element
 function makeEpisodeCard(episode) {
-  // Destructure the values we need
   const { name, season, number, image, summary, runtime, airdate } = episode;
 
-  // Create article (semantic)
   const article = document.createElement("article");
-  article.className = "episode";
-  article.setAttribute("tabindex", "0"); // make focusable for keyboard users
-  article.setAttribute("aria-labelledby", `title-${season}-${number}`);
+  article.className = "episode"; // card styling
+  article.setAttribute("tabindex", "0"); // makes card keyboard accessible
+  article.setAttribute("aria-labelledby", `title-${season}-${number}`); // links to title for screen readers
 
-  // Header with title and meta
   const header = document.createElement("header");
   header.className = "episode-header";
 
   const h2 = document.createElement("h2");
-  h2.id = `title-${season}-${number}`;
-  h2.textContent = `${formatEpisodeCode(season, number)} - ${name}`;
+  h2.id = `title-${season}-${number}`; // unique id for accessibility
+  h2.textContent = `${formatEpisodeCode(season, number)} - ${name}`; // formatted title
   header.appendChild(h2);
 
   const meta = document.createElement("p");
   meta.className = "episode-meta";
   meta.textContent = `Airdate: ${airdate || "Unknown"} • Runtime: ${
     runtime ? runtime + " min" : "Unknown"
-  }`;
+  }`; // shows airdate and runtime
   header.appendChild(meta);
 
   article.appendChild(header);
 
-  // Image (if provided) with accessible alt text
+  // Adds image if available
   if (image && image.medium) {
     const img = document.createElement("img");
-    img.src = image.medium;
-    img.alt = `${name} (Season ${season} Episode ${number})`;
-    img.loading = "lazy";
+    img.src = image.medium; // medium size image
+    img.alt = `${name} (Season ${season} Episode ${number})`; // descriptive alt text
+    img.loading = "lazy"; // improves performance by delaying load
     img.className = "episode-image";
     article.appendChild(img);
   }
 
-  // Summary: the API summary contains HTML; preserve it but ensure it's safe
-
+  // Summary section
   const summarySection = document.createElement("section");
   summarySection.className = "episode-summary";
-  summarySection.innerHTML = summary || "<p>No summary available.</p>";
+  summarySection.innerHTML = summary || "<p>No summary available.</p>"; // uses provided HTML summary
   article.appendChild(summarySection);
 
   return article;
 }
 
+// Builds the full page layout including header, search, count, and episode grid
 function makePageForEpisodes(episodeList) {
   const rootElem = document.getElementById("root");
-  // clear previous content
-  rootElem.innerHTML = "";
+  rootElem.innerHTML = ""; // clears previous content
 
-  // Top heading and count (semantic)
   const main = document.createElement("main");
   main.className = "site-main";
 
-  const heading = document.createElement("h1");
-  heading.textContent = "TV Show Episodes";
-  main.appendChild(heading);
+  // Header block for title, search, and dropdown
+  const headerContainer = document.createElement("div");
+  headerContainer.className = "site-header";
 
+  const heading = document.createElement("h1");
+  heading.textContent = "TV Show Episodes"; // main page heading
+  headerContainer.appendChild(heading);
+
+  // Search input and its label
+  const searchContainer = document.createElement("div");
+  searchContainer.className = "search-container";
+
+  const searchLabel = document.createElement("label");
+  searchLabel.textContent = "Search: "; // visible label text
+  searchLabel.setAttribute("for", "search-input"); // connects label to input
+
+  const searchInput = document.createElement("input");
+  searchInput.id = "search-input"; // referenced by label
+  searchInput.type = "text"; // text search field
+  searchInput.placeholder = "Type to search by name or summary"; // hint text for user
+
+  searchLabel.appendChild(searchInput);
+  searchContainer.appendChild(searchLabel);
+  headerContainer.appendChild(searchContainer);
+
+  // --- Episode select dropdown ---
+  const selectContainer = document.createElement("div");
+  selectContainer.className = "select-container";
+
+  const selectLabel = document.createElement("label");
+  selectLabel.textContent = "Jump to episode: ";
+  selectLabel.setAttribute("for", "episode-select");
+
+  const episodeSelect = document.createElement("select");
+  episodeSelect.id = "episode-select";
+
+  // Default option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "All episodes";
+  episodeSelect.appendChild(defaultOption);
+
+  // Populate select with episodes
+  episodeList.forEach((ep, index) => {
+    const option = document.createElement("option");
+    option.value = index; // index will help us find the episode
+    option.textContent = `${formatEpisodeCode(ep.season, ep.number)} - ${ep.name}`;
+    episodeSelect.appendChild(option);
+  });
+
+  selectLabel.appendChild(episodeSelect);
+  selectContainer.appendChild(selectLabel);
+  headerContainer.appendChild(selectContainer);
+
+  main.appendChild(headerContainer);
+
+  // Displays the number of episodes shown vs total
   const count = document.createElement("p");
   count.className = "episode-count";
-  count.textContent = `Showing ${episodeList.length} episode(s)`;
+  count.textContent = `Showing ${episodeList.length} of ${episodeList.length} episodes`;
   main.appendChild(count);
 
-  // Container for episodes
+  // Container for all episode cards
   const list = document.createElement("section");
-  list.className = "episode-grid";
+  list.className = "episode-grid"; // CSS grid for layout
   list.setAttribute("aria-label", "Episodes list");
 
-  // Create and append each episode card
+  // Build each episode card and add to the grid
   episodeList.forEach((ep) => {
     const card = makeEpisodeCard(ep);
     list.appendChild(card);
@@ -89,6 +139,49 @@ function makePageForEpisodes(episodeList) {
 
   main.appendChild(list);
   rootElem.appendChild(main);
+
+  // Live search filter logic
+  searchInput.addEventListener("input", () => {
+    const term = searchInput.value.toLowerCase(); // lowercased search term
+    let matched = 0; // counts visible episodes
+
+    Array.from(list.children).forEach((card, i) => {
+      const ep = episodeList[i];
+      const isMatch =
+        ep.name.toLowerCase().includes(term) ||
+        (ep.summary && ep.summary.toLowerCase().includes(term));
+
+      if (isMatch) {
+        card.style.display = ""; // keep visible
+        matched++;
+      } else {
+        card.style.display = "none"; // hide non matches
+      }
+    });
+
+    // Update count to show "X of Y episodes"
+    count.textContent = `Showing ${matched} of ${episodeList.length} episodes`;
+  });
+
+  // --- Jump to episode using select ---
+  episodeSelect.addEventListener("change", () => {
+    const selectedIndex = episodeSelect.value;
+    Array.from(list.children).forEach((card, i) => {
+      // Show only selected episode or all if default
+      if (selectedIndex === "" || i == selectedIndex) {
+        card.style.display = "";
+      } else {
+        card.style.display = "none";
+      }
+    });
+
+    // Update count dynamically
+    const visibleCount =
+      selectedIndex === "" ? episodeList.length : 1;
+    count.textContent = `Showing ${visibleCount} of ${episodeList.length} episodes`;
+  });
 }
 
+
+// Runs setup when window loads
 window.onload = setup;
