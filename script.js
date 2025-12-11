@@ -14,7 +14,7 @@ title.id = "pageTitle";
 const controls = document.createElement("div");
 controls.className = "controls";
 
-// --- Show selector dropdown (Requirement 1) ---
+// --- Show selector dropdown ---
 const showSelect = document.createElement("select");
 showSelect.id = "showSelect";
 showSelect.setAttribute("aria-label", "Select show");
@@ -111,23 +111,58 @@ function showErrorUI(
   showSelect.disabled = true;
 }
 
-// --- Fetch episodes once and initialize UI ---
-async function fetchEpisodesOnce() {
-  const url = "https://api.tvmaze.com/shows/82/episodes";
-  const resp = await APICache.fetch(url);
-  return resp;
+// --- Fetch all shows once ---
+async function fetchAllShows() {
+  const url = "https://api.tvmaze.com/shows";
+  const shows = await APICache.fetch(url); // cached if previously fetched
+  // sort alphabetically, case-insensitive
+  shows.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  return shows;
 }
 
+// --- Populate show dropdown ---
+function populateShowDropdown(shows) {
+  showSelect.innerHTML = "";
+  const defaultOpt = document.createElement("option");
+  defaultOpt.value = "";
+  defaultOpt.textContent = "Select a show";
+  showSelect.appendChild(defaultOpt);
+
+  shows.forEach((show) => {
+    const opt = document.createElement("option");
+    opt.value = show.id; // store show ID
+    opt.textContent = show.name;
+    showSelect.appendChild(opt);
+  });
+
+  showSelect.disabled = false; // enable now that data is ready
+}
+
+// --- Fetch episodes for a specific show ---
+async function fetchEpisodesByShow(showId) {
+  const url = `https://api.tvmaze.com/shows/${showId}/episodes`;
+  const episodes = await APICache.fetch(url);
+  return episodes;
+}
+
+// --- Fetch shows and first show's episodes, then init UI ---
 async function fetchAndInit() {
   showLoadingUI();
   try {
-    const episodes = await fetchEpisodesOnce();
-    // Cache once
-    allEpisodes = episodes;
-    initUIWithData(allEpisodes);
+    const shows = await fetchAllShows();
+    populateShowDropdown(shows);
+
+    // Select first show by default
+    if (shows.length > 0) {
+      const firstShow = shows[0];
+      showSelect.value = firstShow.id;
+      const episodes = await fetchEpisodesByShow(firstShow.id);
+      allEpisodes = episodes;
+      initUIWithData(allEpisodes);
+    }
   } catch (err) {
-    console.error("Failed to load episodes:", err);
-    showErrorUI("❌ Failed to load episodes. Please refresh or try Retry.");
+    console.error("Failed to load shows or episodes:", err);
+    showErrorUI("❌ Failed to load shows. Please refresh or try Retry.");
   }
 }
 
@@ -152,7 +187,7 @@ function initUIWithData(episodes) {
     timer = setTimeout(() => applyFilters(), 180);
   });
 
-  // Select handler
+  // Episode select handler
   episodeSelect.addEventListener("change", () => applyFilters());
 }
 
@@ -257,7 +292,7 @@ function renderEpisodes(list) {
   episodeContainer.appendChild(grid);
 }
 
-// --- Build dropdown options ---
+// --- Build episode dropdown ---
 function makeEpisodeDropdown(episodes) {
   episodeSelect.innerHTML = "";
   const defaultOpt = document.createElement("option");
@@ -280,5 +315,5 @@ function updateCount(n) {
   countLabel.textContent = `Showing ${n} episode(s)`;
 }
 
-// --- Start app (fetch once) ---
+// --- Start app ---
 fetchAndInit();
