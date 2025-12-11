@@ -315,5 +315,22 @@ function updateCount(n) {
   countLabel.textContent = `Showing ${n} episode(s)`;
 }
 
+// --- Handle show selection (Requirement 3) ---
+showSelect.addEventListener("change", async () => {
+  const showId = showSelect.value;
+  if (!showId) return;
+
+  showLoadingUI();
+
+  try {
+    const episodes = await fetchEpisodesByShow(showId);
+    allEpisodes = episodes;
+    initUIWithData(allEpisodes); // reuse existing UI init logic
+  } catch (err) {
+    console.error("Failed to load episodes for selected show:", err);
+    showErrorUI("❌ Failed to load episodes for this show. Please try again.");
+  }
+});
+
 // --- Start app ---
 fetchAndInit();
