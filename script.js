@@ -49,7 +49,7 @@ root.appendChild(episodeContainer);
 function formatCode(season, number) {
   return `S${String(season).padStart(2, "0")}E${String(number).padStart(
     2,
-    "0"
+    "0",
   )}`;
 }
 
@@ -78,7 +78,7 @@ function showLoadingUI() {
 
 // --- Show error UI with Retry ---
 function showErrorUI(
-  message = "Failed to load episodes. Please check your connection."
+  message = "Failed to load episodes. Please check your connection.",
 ) {
   episodeContainer.innerHTML = "";
   const err = document.createElement("div");
@@ -106,9 +106,9 @@ function showErrorUI(
 // --- Fetch episodes once and initialize UI ---
 async function fetchEpisodesOnce() {
   const url = "https://api.tvmaze.com/shows/82/episodes";
-  const resp = await fetch(url, { cache: "no-store" });
-  if (!resp.ok) throw new Error(`Network error: ${resp.status}`);
-  return resp.json();
+  const resp = await APICache.fetch(url);
+  // APICache.fetch already returns parsed JSON, so just return it
+  return resp;
 }
 
 async function fetchAndInit() {
@@ -160,7 +160,7 @@ function applyFilters() {
   // If a specific episode selected
   if (selectedVal && selectedVal !== "all") {
     const found = allEpisodes.find(
-      (ep) => String(ep.id) === String(selectedVal)
+      (ep) => String(ep.id) === String(selectedVal),
     );
     if (!found) {
       // nothing found — show empty
