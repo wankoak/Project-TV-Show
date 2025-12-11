@@ -1,5 +1,3 @@
-// script.js (Level 300 - improved)
-
 // --- Global data (filled AFTER fetch) ---
 let allEpisodes = [];
 
@@ -16,22 +14,33 @@ title.id = "pageTitle";
 const controls = document.createElement("div");
 controls.className = "controls";
 
-const searchBar = document.createElement("input");
+// --- Show selector dropdown ---
+const showSelect = document.createElement("select");
+showSelect.id = "showSelect";
+showSelect.setAttribute("aria-label", "Select show");
+showSelect.disabled = true; // disabled until shows are loaded
+
+// Search bar
+let searchBar = document.createElement("input");
 searchBar.type = "search";
 searchBar.placeholder = "Search episodes...";
 searchBar.id = "searchBar";
 searchBar.setAttribute("aria-label", "Search episodes");
 searchBar.disabled = true; // disabled until data loaded
 
-const episodeSelect = document.createElement("select");
+// Episode dropdown
+let episodeSelect = document.createElement("select");
 episodeSelect.id = "episodeSelect";
 episodeSelect.setAttribute("aria-label", "Select episode");
 episodeSelect.disabled = true; // disabled until data loaded
 
+// Episode count label
 const countLabel = document.createElement("span");
 countLabel.className = "episode-count";
 countLabel.setAttribute("aria-live", "polite"); // announce changes
 
+// Append controls: showSelect first
+controls.appendChild(showSelect);
 controls.appendChild(searchBar);
 controls.appendChild(episodeSelect);
 controls.appendChild(countLabel);
@@ -49,14 +58,13 @@ root.appendChild(episodeContainer);
 function formatCode(season, number) {
   return `S${String(season).padStart(2, "0")}E${String(number).padStart(
     2,
-    "0"
+    "0",
   )}`;
 }
 
 // Utility: safe text extractor (summary may be null and may contain HTML)
 function extractSummaryText(summaryHtml) {
   if (!summaryHtml) return "";
-  // Remove HTML tags for text searching. Create a temporary element.
   const tmp = document.createElement("div");
   tmp.innerHTML = summaryHtml;
   return tmp.textContent || tmp.innerText || "";
@@ -67,6 +75,7 @@ function showLoadingUI() {
   // disable controls while loading
   searchBar.disabled = true;
   episodeSelect.disabled = true;
+  showSelect.disabled = true;
 
   episodeContainer.innerHTML = "";
   const loading = document.createElement("div");
@@ -78,15 +87,13 @@ function showLoadingUI() {
 
 // --- Show error UI with Retry ---
 function showErrorUI(
-  message = "Failed to load episodes. Please check your connection."
+  message = "Failed to load episodes. Please check your connection.",
 ) {
   episodeContainer.innerHTML = "";
   const err = document.createElement("div");
   err.className = "error";
   err.setAttribute("role", "alert");
-  err.innerHTML = `
-    <p>${message}</p>
-  `;
+  err.innerHTML = `<p>${message}</p>`;
 
   const retryBtn = document.createElement("button");
   retryBtn.type = "button";
@@ -101,41 +108,86 @@ function showErrorUI(
   // keep controls disabled
   searchBar.disabled = true;
   episodeSelect.disabled = true;
+  showSelect.disabled = true;
 }
 
-// --- Fetch episodes once and initialize UI ---
-async function fetchEpisodesOnce() {
-  const url = "https://api.tvmaze.com/shows/82/episodes";
-  const resp = await fetch(url, { cache: "no-store" });
-  if (!resp.ok) throw new Error(`Network error: ${resp.status}`);
-  return resp.json();
+// --- Fetch all shows once ---
+async function fetchAllShows() {
+  const url = "https://api.tvmaze.com/shows";
+  const shows = await APICache.fetch(url); // cached if previously fetched
+  // sort alphabetically, case-insensitive
+  shows.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  return shows;
 }
 
+// --- Populate show dropdown ---
+function populateShowDropdown(shows) {
+  showSelect.innerHTML = "";
+  const defaultOpt = document.createElement("option");
+  defaultOpt.value = "";
+  defaultOpt.textContent = "Select a show";
+  showSelect.appendChild(defaultOpt);
+
+  shows.forEach((show) => {
+    const opt = document.createElement("option");
+    opt.value = show.id; // store show ID
+    opt.textContent = show.name;
+    showSelect.appendChild(opt);
+  });
+
+  showSelect.disabled = false; // enable now that data is ready
+}
+
+// --- Fetch episodes for a specific show ---
+async function fetchEpisodesByShow(showId) {
+  const url = `https://api.tvmaze.com/shows/${showId}/episodes`;
+  const episodes = await APICache.fetch(url);
+  return episodes;
+}
+
+// --- Fetch shows and first show's episodes, then init UI ---
 async function fetchAndInit() {
   showLoadingUI();
   try {
-    const episodes = await fetchEpisodesOnce();
-    // Cache once
-    allEpisodes = episodes;
-    initUIWithData(allEpisodes);
+    const shows = await fetchAllShows();
+    populateShowDropdown(shows);
+
+    // Select first show by default
+    if (shows.length > 0) {
+      const firstShow = shows[0];
+      showSelect.value = firstShow.id;
+      const episodes = await fetchEpisodesByShow(firstShow.id);
+      allEpisodes = episodes;
+      initUIWithData(allEpisodes);
+    }
   } catch (err) {
-    console.error("Failed to load episodes:", err);
-    showErrorUI("❌ Failed to load episodes. Please refresh or try Retry.");
+    console.error("Failed to load shows or episodes:", err);
+    showErrorUI("❌ Failed to load shows. Please refresh or try Retry.");
   }
 }
 
 // --- Initialize controls and rendering once we have data ---
 function initUIWithData(episodes) {
-  // populate dropdown
+  // populate episode dropdown
   makeEpisodeDropdown(episodes);
 
   // enable controls
   searchBar.disabled = false;
   episodeSelect.disabled = false;
+  showSelect.disabled = false;
 
-  // render all
+  // render all episodes
   renderEpisodes(episodes);
   updateCount(episodes.length);
+
+  // Remove previous event listeners by replacing nodes
+  const newSearchBar = searchBar.cloneNode(true);
+  searchBar.parentNode.replaceChild(newSearchBar, searchBar);
+  searchBar = newSearchBar;
+
+  const newEpisodeSelect = episodeSelect.cloneNode(true);
+  episodeSelect.parentNode.replaceChild(newEpisodeSelect, episodeSelect);
+  episodeSelect = newEpisodeSelect;
 
   // Search handler (debounced)
   let timer = null;
@@ -144,11 +196,11 @@ function initUIWithData(episodes) {
     timer = setTimeout(() => applyFilters(), 180);
   });
 
-  // Select handler
+  // Episode select handler
   episodeSelect.addEventListener("change", () => applyFilters());
 }
 
-// --- Apply filters using cached allEpisodes (no new fetches) ---
+// --- Apply filters using cached allEpisodes ---
 function applyFilters() {
   if (!Array.isArray(allEpisodes)) return;
 
@@ -160,10 +212,9 @@ function applyFilters() {
   // If a specific episode selected
   if (selectedVal && selectedVal !== "all") {
     const found = allEpisodes.find(
-      (ep) => String(ep.id) === String(selectedVal)
+      (ep) => String(ep.id) === String(selectedVal),
     );
     if (!found) {
-      // nothing found — show empty
       renderNoResults();
       updateCount(0);
       return;
@@ -171,7 +222,6 @@ function applyFilters() {
     results = [found];
     renderEpisodes(results);
     updateCount(1);
-    // optional: scroll into view — but here we render only that episode
     return;
   }
 
@@ -198,7 +248,7 @@ function renderNoResults() {
   episodeContainer.innerHTML = `<p>No episodes found.</p>`;
 }
 
-// --- Render episode cards (handles missing images & missing summary) ---
+// --- Render episode cards ---
 function renderEpisodes(list) {
   episodeContainer.innerHTML = "";
   const grid = document.createElement("div");
@@ -211,7 +261,6 @@ function renderEpisodes(list) {
     card.setAttribute("aria-labelledby", `title-${ep.id}`);
     card.dataset.episodeId = ep.id;
 
-    // Header
     const header = document.createElement("header");
     header.className = "episode-header";
 
@@ -231,7 +280,6 @@ function renderEpisodes(list) {
 
     card.appendChild(header);
 
-    // Image (only if available)
     if (ep.image && (ep.image.medium || ep.image.original)) {
       const img = document.createElement("img");
       img.className = "episode-image";
@@ -241,7 +289,6 @@ function renderEpisodes(list) {
       card.appendChild(img);
     }
 
-    // Summary — preserve HTML but handle missing
     const summarySection = document.createElement("section");
     summarySection.className = "episode-summary";
     summarySection.setAttribute("aria-label", "Episode summary");
@@ -254,7 +301,7 @@ function renderEpisodes(list) {
   episodeContainer.appendChild(grid);
 }
 
-// --- Build dropdown options ---
+// --- Build episode dropdown ---
 function makeEpisodeDropdown(episodes) {
   episodeSelect.innerHTML = "";
   const defaultOpt = document.createElement("option");
@@ -277,5 +324,22 @@ function updateCount(n) {
   countLabel.textContent = `Showing ${n} episode(s)`;
 }
 
-// --- Start app (fetch once) ---
+// --- Handle show selection ---
+showSelect.addEventListener("change", async () => {
+  const showId = showSelect.value;
+  if (!showId) return;
+
+  showLoadingUI();
+
+  try {
+    const episodes = await fetchEpisodesByShow(showId);
+    allEpisodes = episodes;
+    initUIWithData(allEpisodes); // ensures search & episode select work for new show
+  } catch (err) {
+    console.error("Failed to load episodes for selected show:", err);
+    showErrorUI("❌ Failed to load episodes for this show. Please try again.");
+  }
+});
+
+// --- Start app ---
 fetchAndInit();
