@@ -1,15 +1,21 @@
 const root = document.getElementById("root");
 
-// Simple fetch cache (stores Promises by URL)
+
 const fetchCache = new Map();
-function fetchWithCache(url) {
-  if (fetchCache.has(url)) return fetchCache.get(url);
-  const p = fetch(url).then((res) => {
-    if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
-    return res.json();
-  });
-  fetchCache.set(url, p);
-  return p;
+
+async function fetchWithCache(url) {
+  if (fetchCache.has(url)) {
+    return fetchCache.get(url);
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${url}: ${res.status}`);
+  }
+
+  const data = await res.json();
+  fetchCache.set(url, data);
+  return data;
 }
 
 /* ---------- Build initial DOM shells ---------- */

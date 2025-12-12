@@ -212,3 +212,16 @@ select {
 .show-select {
   min-width: 200px;
 }
+
+/* Attribution footer (required by TVMaze licensing) */
+.attribution {
+  max-width: var(--maxwidth);
+  margin: 28px auto 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+}
+.attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
