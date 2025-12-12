@@ -1,19 +1,40 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TV Show Project | Khor Biel (wankoak)</title>
-    <link href="style.css" rel="stylesheet" />
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TV Shows — Level 500</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
     <div id="root"></div>
 
-    <!-- Caching module (must load before script.js) -->
-    <script src="cache.js"></script>
-    <!-- Loads YOUR javascript code -->
+    <template id="show-card-template">
+      <article class="show-card">
+        <div class="show-image-wrap">
+          <img class="show-image" alt="Show image" />
+        </div>
+        <div class="show-body">
+          <h3 class="show-title"></h3>
+          <p class="show-meta"></p>
+          <div class="show-summary"></div>
+        </div>
+        <div class="show-stats"></div>
+      </article>
+    </template>
+
+    <template id="episode-card-template">
+      <article class="episode-card">
+        <div class="episode-header">
+          <h4 class="episode-title"></h4>
+          <p class="episode-meta"></p>
+        </div>
+        <img class="episode-image" alt="Episode image" />
+        <div class="episode-summary"></div>
+      </article>
+    </template>
+
     <script src="script.js"></script>
   </body>
 </html>

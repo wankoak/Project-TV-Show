@@ -1,171 +1,214 @@
 :root {
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
+  --bg: #f6f6f8;
+  --card: #ffffff;
+  --muted: #666;
+  --accent: #efefef;
+  --maxwidth: 1100px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial;
-  line-height: 1.4;
   color: #111;
-  background: #f9f9f9;
-  padding: 16px;
 }
 
 * {
   box-sizing: border-box;
 }
-
-/* root container */
+body {
+  margin: 0;
+  background: var(--bg);
+  padding: 18px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 #root {
-  max-width: 1100px;
+  max-width: var(--maxwidth);
   margin: 0 auto;
-  padding: 16px;
 }
 
-/* top header container: heading + search + select */
-.site-header {
+/* Top bar (changes depending on view) */
+.topbar {
   display: flex;
-  justify-content: space-between; /* heading left, search/select right */
+  gap: 12px;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: space-between;
   margin-bottom: 16px;
 }
-
-/* heading styling */
-.site-header h1 {
-  flex: 1 1 auto;
-  margin: 0;
-  font-size: 1.6rem;
-}
-
-/* search container */
-.search-container {
-  flex: 0 0 auto;
+.left-controls,
+.center-controls,
+.right-controls {
   display: flex;
-  align-items: center;
   gap: 8px;
-}
-
-/* search input styling */
-#search-input {
-  width: 200px;
-  padding: 6px 10px;
-  font-size: 0.9rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-/* select/dropdown container */
-.select-container {
-  flex: 0 0 auto;
-  display: flex;
   align-items: center;
-  gap: 8px; /* space between label and select */
-  margin-left: 12px; /* space between search and dropdown */
+}
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
-/* episode dropdown styling */
-#episode-select {
-  padding: 6px 10px;
-  font-size: 0.9rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+/* inputs & selects */
+.input,
+select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  font-size: 14px;
 }
-
-/* new show dropdown styling */
-#showSelect {
-  padding: 6px 10px;
-  font-size: 0.9rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  margin-bottom: 8px; /* spacing from other controls */
+.input[type="search"] {
   min-width: 220px;
 }
 
-/* episode count */
-.episode-count {
-  color: #333;
-  margin: 0 0 16px 0;
-}
-
-/* grid for episodes */
-.episode-grid {
+/* shows grid */
+.shows-grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: 1fr;
+  gap: 18px;
 }
 
-/* episode card */
-.episode {
-  background: #fff;
-  border: 1px solid #e0e0e0;
+/* show card */
+.show-card {
+  background: var(--card);
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  overflow: visible;
+  display: grid;
+  grid-template-columns: 150px 1fr 240px;
+  gap: 18px;
+  padding: 20px;
+  min-height: 220px;
+  align-items: start;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+.show-image-wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.show-image {
+  width: 140px;
+  height: 200px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #f2f2f2;
+  border: 1px solid #e8e8e8;
+}
+.show-body {
+  grid-column: 2 / 3;
+}
+.show-title {
+  margin: 0 0 10px 0;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #111;
+  font-weight: 700;
+}
+.show-title:hover {
+  text-decoration: underline;
+}
+.show-meta {
+  margin: 0 0 12px 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.show-summary {
+  color: #222;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+.show-stats {
+  grid-column: 3 / 4;
+  background: var(--card);
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  color: var(--muted);
+  font-size: 0.95rem;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.show-stats b {
+  color: #111;
+}
+
+/* episodes layout */
+.episodes-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.episodes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.episode-card {
+  background: var(--card);
+  border: 1px solid #e3e3e3;
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  outline: none;
 }
-
-.episode:focus {
-  box-shadow: 0 0 0 4px rgba(21, 156, 228, 0.15);
-  border-color: #159ce4;
-}
-
-.episode-header h2 {
-  font-size: 1rem;
-  margin: 0 0 6px 0;
-}
-
-.episode-meta {
-  font-size: 0.85rem;
-  color: #666;
-  margin: 0 0 8px 0;
-}
-
-/* image */
 .episode-image {
   width: 100%;
-  height: auto;
-  display: block;
-  margin: 6px 0;
   border-radius: 4px;
+  margin: 8px 0;
 }
-
-/* summary styling */
-.episode-summary p {
-  margin: 8px 0 0 0;
+.episode-header h4 {
+  margin: 0 0 6px 0;
+}
+.episode-meta {
+  color: var(--muted);
+  margin: 0 0 8px 0;
+}
+.episode-summary {
   color: #222;
+  font-size: 0.95rem;
 }
 
-/* small screens: responsive adjustments */
-@media (max-width: 420px) {
-  #root {
-    padding: 8px;
+/* small screens */
+@media (max-width: 1000px) {
+  .shows-grid,
+  .episodes-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-
-  .episode {
-    padding: 10px;
+  .show-card {
+    grid-template-columns: 120px 1fr;
   }
-
-  /* stack header items on small screens */
-  .site-header {
+  .show-stats {
+    grid-column: 1 / -1;
+    margin-top: 12px;
+  }
+}
+@media (max-width: 680px) {
+  .shows-grid,
+  .episodes-grid {
+    grid-template-columns: 1fr;
+  }
+  .topbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
-
-  .search-container,
-  .select-container {
-    justify-content: flex-start;
-    margin-top: 8px;
-  }
-
-  #search-input,
-  #episode-select,
-  #showSelect {
+  .input[type="search"] {
     width: 100%;
   }
+}
 
-  .select-container {
-    margin-left: 0; /* remove horizontal spacing on stacked layout */
-  }
+/* Topbar additional small controls */
+.filter-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-right: 6px;
+}
+.results-count {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-left: 8px;
+}
+.show-select {
+  min-width: 200px;
 }
